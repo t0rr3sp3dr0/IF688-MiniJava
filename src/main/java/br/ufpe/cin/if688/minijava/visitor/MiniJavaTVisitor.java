@@ -147,14 +147,14 @@ public class MiniJavaTVisitor<T> implements MiniJavaVisitor<T> {
 
                     Exp exp = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
 
-                    new Assign(identifier, exp);
+                    return (T) new Assign(identifier, exp);
                 }
 
                 Identifier identifier = ctx.identifier().accept((MiniJavaVisitor<? extends Identifier>) this);
 
                 Exp index = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
 
-                Exp value = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
+                Exp value = ctx.expression(1).accept((MiniJavaVisitor<? extends Exp>) this);
 
                 return (T) new ArrayAssign(identifier, index, value);
             }
@@ -163,6 +163,79 @@ public class MiniJavaTVisitor<T> implements MiniJavaVisitor<T> {
 
     @Override
     public T visitExpression(MiniJavaParser.ExpressionContext ctx) {
+        if (ctx.getChild(0) instanceof MiniJavaParser.ExpressionContext) {
+            switch (ctx.getChild(1).getText()) {
+                case "[": {
+                    Exp array = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
+
+                    Exp index = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
+
+                    return (T) new ArrayLookup(array, index);
+                }
+
+                case ".": {
+                    switch (ctx.getChild(2).getText()) {
+                        case "length": {
+                            Exp exp = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
+
+                            return (T) new ArrayLength(exp);
+                        }
+
+                        default: {
+                            Exp exp = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
+
+                            Identifier identifier = ctx.identifier().accept((MiniJavaVisitor<? extends Identifier>) this);
+
+                            boolean b = true;
+                            ExpList expList = new ExpList();
+                            for (MiniJavaParser.ExpressionContext expressionContext : ctx.expression()) {
+                                if (b) {
+                                    b = false;
+                                    continue;
+                                }
+
+                                expList.addElement(expressionContext.accept((MiniJavaVisitor<? extends Exp>) this));
+                            }
+
+                            return (T) new Call(exp, identifier, expList);
+                        }
+                    }
+                }
+
+                default: {
+                    Exp lhs = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
+
+                    Exp rhs = ctx.expression(1).accept((MiniJavaVisitor<? extends Exp>) this);
+
+                    switch (ctx.getChild(1).getText()) {
+                        case "&&": {
+                            return (T) new And(lhs, rhs);
+                        }
+
+                        case "<": {
+                            return (T) new LessThan(lhs, rhs);
+                        }
+
+                        case "+": {
+                            return (T) new Plus(lhs, rhs);
+                        }
+
+                        case "-": {
+                            return (T) new Minus(lhs, rhs);
+                        }
+
+                        case "*": {
+                            return (T) new Times(lhs, rhs);
+                        }
+
+                        default:
+                            assert false;
+                            return null;
+                    }
+                }
+            }
+        }
+
         switch (ctx.getStart().getText()) {
             case "true": {
                 return (T) new True();
@@ -177,7 +250,7 @@ public class MiniJavaTVisitor<T> implements MiniJavaVisitor<T> {
             }
 
             case "new": {
-                if (!ctx.expression().isEmpty()) {
+                if (ctx.getChild(1).getText().equals("int")) {
                     Exp exp = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
 
                     return (T) new NewArray(exp);
@@ -201,86 +274,13 @@ public class MiniJavaTVisitor<T> implements MiniJavaVisitor<T> {
             }
 
             default: {
-                if (ctx.expression().isEmpty()) {
-                    TerminalNode terminalNode = ctx.INTEGER_LITERAL();
-                    if (terminalNode != null)
-                        return (T) new IntegerLiteral(Integer.valueOf(terminalNode.getText()));
+                TerminalNode terminalNode = ctx.INTEGER_LITERAL();
+                if (terminalNode != null)
+                    return (T) new IntegerLiteral(Integer.valueOf(terminalNode.getText()));
 
-                    Identifier identifier = ctx.identifier().accept((MiniJavaVisitor<? extends Identifier>) this);
+                Identifier identifier = ctx.identifier().accept((MiniJavaVisitor<? extends Identifier>) this);
 
-                    return (T) identifier;
-                }
-
-                switch (ctx.getChild(1).getText()) {
-                    case "[": {
-                        Exp array = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
-
-                        Exp index = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
-
-                        return (T) new ArrayLookup(array, index);
-                    }
-
-                    case ".": {
-                        switch (ctx.getChild(2).getText()) {
-                            case "length": {
-                                Exp exp = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
-
-                                return (T) new ArrayLength(exp);
-                            }
-
-                            default: {
-                                Exp exp = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
-
-                                Identifier identifier = ctx.identifier().accept((MiniJavaVisitor<? extends Identifier>) this);
-
-                                boolean b = true;
-                                ExpList expList = new ExpList();
-                                for (MiniJavaParser.ExpressionContext expressionContext : ctx.expression()) {
-                                    if (b) {
-                                        b = false;
-                                        continue;
-                                    }
-
-                                    expList.addElement(expressionContext.accept((MiniJavaVisitor<? extends Exp>) this));
-                                }
-
-                                return (T) new Call(exp, identifier, expList);
-                            }
-                        }
-                    }
-
-                    default: {
-                        Exp lhs = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
-
-                        Exp rhs = ctx.expression(1).accept((MiniJavaVisitor<? extends Exp>) this);
-
-                        switch (ctx.getChild(1).getText()) {
-                            case "&&": {
-                                return (T) new And(lhs, rhs);
-                            }
-
-                            case "<": {
-                                return (T) new LessThan(lhs, rhs);
-                            }
-
-                            case "+": {
-                                return (T) new Plus(lhs, rhs);
-                            }
-
-                            case "-": {
-                                return (T) new Minus(lhs, rhs);
-                            }
-
-                            case "*": {
-                                return (T) new Times(lhs, rhs);
-                            }
-
-                            default:
-                                assert false;
-                                return null;
-                        }
-                    }
-                }
+                return (T) identifier;
             }
         }
     }
