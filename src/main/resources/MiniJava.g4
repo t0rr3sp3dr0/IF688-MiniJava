@@ -34,5 +34,5 @@ identifier:         IDENTIFIER ;
 INTEGER_LITERAL     : [0]|[1-9][0-9]* ;
 IDENTIFIER          : [_A-Za-z][_0-9A-Za-z]* ;
 WHITESPACE          : [ \t\r\n\f]+ -> skip ;
-SINGLELINE_COMMENT  : [/][/](.*)? -> skip ;
-BLOCK_COMMENT       : [/][*](.*[\n]*)?[*][/] -> skip ;
+SINGLELINE_COMMENT  : '//' ~[\r\n]* -> skip ;
+BLOCK_COMMENT       : '/*' .*? '*/' -> skip ;
