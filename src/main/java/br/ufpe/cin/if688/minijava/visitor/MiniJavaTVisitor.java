@@ -10,6 +10,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 import java.util.Iterator;
 
+@SuppressWarnings("unchecked")
 public class MiniJavaTVisitor<T> implements MiniJavaVisitor<T> {
     @Override
     public T visitGoal(MiniJavaParser.GoalContext ctx) {
