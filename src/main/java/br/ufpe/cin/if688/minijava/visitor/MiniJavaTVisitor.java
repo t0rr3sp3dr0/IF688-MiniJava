@@ -280,8 +280,9 @@ public class MiniJavaTVisitor<T> implements MiniJavaVisitor<T> {
                     return (T) new IntegerLiteral(Integer.valueOf(terminalNode.getText()));
 
                 Identifier identifier = ctx.identifier().accept((MiniJavaVisitor<? extends Identifier>) this);
+                IdentifierExp identifierExp = new IdentifierExp(identifier.toString());
 
-                return (T) identifier;
+                return (T) identifierExp;
             }
         }
     }
