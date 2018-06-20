@@ -169,7 +169,7 @@ public class MiniJavaTVisitor<T> implements MiniJavaVisitor<T> {
                 case "[": {
                     Exp array = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
 
-                    Exp index = ctx.expression(0).accept((MiniJavaVisitor<? extends Exp>) this);
+                    Exp index = ctx.expression(1).accept((MiniJavaVisitor<? extends Exp>) this);
 
                     return (T) new ArrayLookup(array, index);
                 }
