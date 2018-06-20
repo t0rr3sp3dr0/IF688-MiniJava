@@ -39,273 +39,322 @@ import br.ufpe.cin.if688.minijava.symboltable.Method;
 import br.ufpe.cin.if688.minijava.symboltable.SymbolTable;
 
 public class BuildSymbolTableVisitor implements IVisitor<Void> {
+    private SymbolTable symbolTable;
+    private Class currClass;
+    private Method currMethod;
 
-	SymbolTable symbolTable;
+    public BuildSymbolTableVisitor() {
+        this.symbolTable = new SymbolTable();
+        this.currClass = null;
+        this.currMethod = null;
+    }
 
-	public BuildSymbolTableVisitor() {
-		symbolTable = new SymbolTable();
-	}
+    public SymbolTable getSymbolTable() {
+        return this.symbolTable;
+    }
 
-	public SymbolTable getSymbolTable() {
-		return symbolTable;
-	}
+    // MainClass m;
+    // ClassDeclList cl;
+    public Void visit(Program n) {
+        n.m.accept(this);
+        for (int i = 0; i < n.cl.size(); ++i)
+            n.cl.elementAt(i).accept(this);
+        return null;
+    }
 
-	private Class currClass;
-	private Method currMethod;
+    // Identifier i1,i2;
+    // Statement s;
+    public Void visit(MainClass n) {
+        String className = n.i1.s;
+        if (!this.symbolTable.addClass(className, null))
+            throw new RuntimeException("Duplicated class");
+        this.currClass = this.symbolTable.getClass(className);
+        assert this.currClass != null;
 
-	// MainClass m;
-	// ClassDeclList cl;
-	public Void visit(Program n) {
-		n.m.accept(this);
-		for (int i = 0; i < n.cl.size(); i++) {
-			n.cl.elementAt(i).accept(this);
-		}
-		return null;
-	}
+        if (!this.currClass.addMethod("main", null))
+            throw new RuntimeException("Method is already defined in the scope");
+        this.currMethod = this.currClass.getMethod("main");
+        assert this.currMethod != null;
 
-	// Identifier i1,i2;
-	// Statement s;
-	public Void visit(MainClass n) {
-		n.i1.accept(this);
-		n.i2.accept(this);
-		n.s.accept(this);
-		return null;
-	}
+        String args = n.i2.s;
+        this.currMethod.addParam(args, null);
 
-	// Identifier i;
-	// VarDeclList vl;
-	// MethodDeclList ml;
-	public Void visit(ClassDeclSimple n) {
-		n.i.accept(this);
-		for (int i = 0; i < n.vl.size(); i++) {
-			n.vl.elementAt(i).accept(this);
-		}
-		for (int i = 0; i < n.ml.size(); i++) {
-			n.ml.elementAt(i).accept(this);
-		}
-		return null;
-	}
+        n.i1.accept(this);
+        n.i2.accept(this);
+        n.s.accept(this);
 
-	// Identifier i;
-	// Identifier j;
-	// VarDeclList vl;
-	// MethodDeclList ml;
-	public Void visit(ClassDeclExtends n) {
-		n.i.accept(this);
-		n.j.accept(this);
-		for (int i = 0; i < n.vl.size(); i++) {
-			n.vl.elementAt(i).accept(this);
-		}
-		for (int i = 0; i < n.ml.size(); i++) {
-			n.ml.elementAt(i).accept(this);
-		}
-		return null;
-	}
+        this.currMethod = null;
+        this.currClass = null;
+        return null;
+    }
 
-	// Type t;
-	// Identifier i;
-	public Void visit(VarDecl n) {
-		n.t.accept(this);
-		n.i.accept(this);
-		return null;
-	}
+    // Identifier i;
+    // VarDeclList vl;
+    // MethodDeclList ml;
+    public Void visit(ClassDeclSimple n) {
+        String className = n.i.s;
+        if (!this.symbolTable.addClass(className, null))
+            throw new RuntimeException("Duplicated class");
+        this.currClass = this.symbolTable.getClass(className);
+        assert this.currClass != null;
 
-	// Type t;
-	// Identifier i;
-	// FormalList fl;
-	// VarDeclList vl;
-	// StatementList sl;
-	// Exp e;
-	public Void visit(MethodDecl n) {
-		n.t.accept(this);
-		n.i.accept(this);
-		for (int i = 0; i < n.fl.size(); i++) {
-			n.fl.elementAt(i).accept(this);
-		}
-		for (int i = 0; i < n.vl.size(); i++) {
-			n.vl.elementAt(i).accept(this);
-		}
-		for (int i = 0; i < n.sl.size(); i++) {
-			n.sl.elementAt(i).accept(this);
-		}
-		n.e.accept(this);
-		return null;
-	}
+        n.i.accept(this);
+        for (int i = 0; i < n.vl.size(); ++i)
+            n.vl.elementAt(i).accept(this);
+        for (int i = 0; i < n.ml.size(); ++i)
+            n.ml.elementAt(i).accept(this);
 
-	// Type t;
-	// Identifier i;
-	public Void visit(Formal n) {
-		n.t.accept(this);
-		n.i.accept(this);
-		return null;
-	}
+        this.currClass = null;
+        return null;
+    }
 
-	public Void visit(IntArrayType n) {
-		return null;
-	}
+    // Identifier i;
+    // Identifier j;
+    // VarDeclList vl;
+    // MethodDeclList ml;
+    public Void visit(ClassDeclExtends n) {
+        String className = n.i.s;
+        if (!this.symbolTable.addClass(className, null))
+            throw new RuntimeException("Duplicated class");
+        this.currClass = this.symbolTable.getClass(className);
+        assert this.currClass != null;
 
-	public Void visit(BooleanType n) {
-		return null;
-	}
+        n.i.accept(this);
+        n.j.accept(this);
+        for (int i = 0; i < n.vl.size(); ++i)
+            n.vl.elementAt(i).accept(this);
+        for (int i = 0; i < n.ml.size(); ++i)
+            n.ml.elementAt(i).accept(this);
 
-	public Void visit(IntegerType n) {
-		return null;
-	}
+        this.currClass = null;
+        return null;
+    }
 
-	// String s;
-	public Void visit(IdentifierType n) {
-		return null;
-	}
+    // Type t;
+    // Identifier i;
+    public Void visit(VarDecl n) {
+        assert this.currClass != null;
 
-	// StatementList sl;
-	public Void visit(Block n) {
-		for (int i = 0; i < n.sl.size(); i++) {
-			n.sl.elementAt(i).accept(this);
-		}
-		return null;
-	}
+        if (this.currMethod == null) {
+            if (!this.currClass.addVar(n.i.s, n.t))
+                throw new RuntimeException("Field is already defined in the scope");
+        } else {
+            if (!this.currMethod.addVar(n.i.s, n.t))
+                throw new RuntimeException("Variable is already defined in the scope");
+        }
 
-	// Exp e;
-	// Statement s1,s2;
-	public Void visit(If n) {
-		n.e.accept(this);
-		n.s1.accept(this);
-		n.s2.accept(this);
-		return null;
-	}
+        n.t.accept(this);
+        n.i.accept(this);
+        return null;
+    }
 
-	// Exp e;
-	// Statement s;
-	public Void visit(While n) {
-		n.e.accept(this);
-		n.s.accept(this);
-		return null;
-	}
+    // Type t;
+    // Identifier i;
+    // FormalList fl;
+    // VarDeclList vl;
+    // StatementList sl;
+    // Exp e;
+    public Void visit(MethodDecl n) {
+        assert this.currClass != null;
 
-	// Exp e;
-	public Void visit(Print n) {
-		n.e.accept(this);
-		return null;
-	}
+        String methodName = n.i.s;
+        if (!this.currClass.addMethod(methodName, n.t))
+            throw new RuntimeException("Method is already defined in the scope");
+        this.currMethod = this.currClass.getMethod(methodName);
+        assert this.currMethod != null;
 
-	// Identifier i;
-	// Exp e;
-	public Void visit(Assign n) {
-		n.i.accept(this);
-		n.e.accept(this);
-		return null;
-	}
+        n.t.accept(this);
+        n.i.accept(this);
+        for (int i = 0; i < n.fl.size(); ++i)
+            n.fl.elementAt(i).accept(this);
+        for (int i = 0; i < n.vl.size(); ++i)
+            n.vl.elementAt(i).accept(this);
+        for (int i = 0; i < n.sl.size(); ++i)
+            n.sl.elementAt(i).accept(this);
+        n.e.accept(this);
 
-	// Identifier i;
-	// Exp e1,e2;
-	public Void visit(ArrayAssign n) {
-		n.i.accept(this);
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
+        this.currMethod = null;
+        return null;
+    }
 
-	// Exp e1,e2;
-	public Void visit(And n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
+    // Type t;
+    // Identifier i;
+    public Void visit(Formal n) {
+        assert this.currClass != null;
+        assert this.currMethod != null;
 
-	// Exp e1,e2;
-	public Void visit(LessThan n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
+        if (!this.currMethod.addParam(n.i.s, n.t))
+            throw new RuntimeException("Parameter is already defined in the scope");
 
-	// Exp e1,e2;
-	public Void visit(Plus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
+        n.t.accept(this);
+        n.i.accept(this);
+        return null;
+    }
 
-	// Exp e1,e2;
-	public Void visit(Minus n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
+    public Void visit(IntArrayType n) {
+        return null;
+    }
 
-	// Exp e1,e2;
-	public Void visit(Times n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
+    public Void visit(BooleanType n) {
+        return null;
+    }
 
-	// Exp e1,e2;
-	public Void visit(ArrayLookup n) {
-		n.e1.accept(this);
-		n.e2.accept(this);
-		return null;
-	}
+    public Void visit(IntegerType n) {
+        return null;
+    }
 
-	// Exp e;
-	public Void visit(ArrayLength n) {
-		n.e.accept(this);
-		return null;
-	}
+    // String s;
+    public Void visit(IdentifierType n) {
+        return null;
+    }
 
-	// Exp e;
-	// Identifier i;
-	// ExpList el;
-	public Void visit(Call n) {
-		n.e.accept(this);
-		n.i.accept(this);
-		for (int i = 0; i < n.el.size(); i++) {
-			n.el.elementAt(i).accept(this);
-		}
-		return null;
-	}
+    // StatementList sl;
+    public Void visit(Block n) {
+        for (int i = 0; i < n.sl.size(); ++i)
+            n.sl.elementAt(i).accept(this);
+        return null;
+    }
 
-	// int i;
-	public Void visit(IntegerLiteral n) {
-		return null;
-	}
+    // Exp e;
+    // Statement s1,s2;
+    public Void visit(If n) {
+        n.e.accept(this);
+        n.s1.accept(this);
+        n.s2.accept(this);
+        return null;
+    }
 
-	public Void visit(True n) {
-		return null;
-	}
+    // Exp e;
+    // Statement s;
+    public Void visit(While n) {
+        n.e.accept(this);
+        n.s.accept(this);
+        return null;
+    }
 
-	public Void visit(False n) {
-		return null;
-	}
+    // Exp e;
+    public Void visit(Print n) {
+        n.e.accept(this);
+        return null;
+    }
 
-	// String s;
-	public Void visit(IdentifierExp n) {
-		return null;
-	}
+    // Identifier i;
+    // Exp e;
+    public Void visit(Assign n) {
+        n.i.accept(this);
+        n.e.accept(this);
+        return null;
+    }
 
-	public Void visit(This n) {
-		return null;
-	}
+    // Identifier i;
+    // Exp e1,e2;
+    public Void visit(ArrayAssign n) {
+        n.i.accept(this);
+        n.e1.accept(this);
+        n.e2.accept(this);
+        return null;
+    }
 
-	// Exp e;
-	public Void visit(NewArray n) {
-		n.e.accept(this);
-		return null;
-	}
+    // Exp e1,e2;
+    public Void visit(And n) {
+        n.e1.accept(this);
+        n.e2.accept(this);
+        return null;
+    }
 
-	// Identifier i;
-	public Void visit(NewObject n) {
-		return null;
-	}
+    // Exp e1,e2;
+    public Void visit(LessThan n) {
+        n.e1.accept(this);
+        n.e2.accept(this);
+        return null;
+    }
 
-	// Exp e;
-	public Void visit(Not n) {
-		n.e.accept(this);
-		return null;
-	}
+    // Exp e1,e2;
+    public Void visit(Plus n) {
+        n.e1.accept(this);
+        n.e2.accept(this);
+        return null;
+    }
 
-	// String s;
-	public Void visit(Identifier n) {
-		return null;
-	}
+    // Exp e1,e2;
+    public Void visit(Minus n) {
+        n.e1.accept(this);
+        n.e2.accept(this);
+        return null;
+    }
+
+    // Exp e1,e2;
+    public Void visit(Times n) {
+        n.e1.accept(this);
+        n.e2.accept(this);
+        return null;
+    }
+
+    // Exp e1,e2;
+    public Void visit(ArrayLookup n) {
+        n.e1.accept(this);
+        n.e2.accept(this);
+        return null;
+    }
+
+    // Exp e;
+    public Void visit(ArrayLength n) {
+        n.e.accept(this);
+        return null;
+    }
+
+    // Exp e;
+    // Identifier i;
+    // ExpList el;
+    public Void visit(Call n) {
+        n.e.accept(this);
+        n.i.accept(this);
+        for (int i = 0; i < n.el.size(); ++i)
+            n.el.elementAt(i).accept(this);
+        return null;
+    }
+
+    // int i;
+    public Void visit(IntegerLiteral n) {
+        return null;
+    }
+
+    public Void visit(True n) {
+        return null;
+    }
+
+    public Void visit(False n) {
+        return null;
+    }
+
+    // String s;
+    public Void visit(IdentifierExp n) {
+        return null;
+    }
+
+    public Void visit(This n) {
+        return null;
+    }
+
+    // Exp e;
+    public Void visit(NewArray n) {
+        n.e.accept(this);
+        return null;
+    }
+
+    // Identifier i;
+    public Void visit(NewObject n) {
+        return null;
+    }
+
+    // Exp e;
+    public Void visit(Not n) {
+        n.e.accept(this);
+        return null;
+    }
+
+    // String s;
+    public Void visit(Identifier n) {
+        return null;
+    }
 }
