@@ -214,7 +214,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
     // Exp e;
     public Type visit(Assign n) {
         if (!this.symbolTable.compareTypes(n.i.accept(this), n.e.accept(this)))
-            throw new RuntimeException(String.format("Incompatible types\t%s", n.e));
+            throw new RuntimeException(String.format("Incompatible types\t%s\t%s", n.i.s, n.e));
         return null;
     }
 
@@ -350,8 +350,17 @@ public class TypeCheckVisitor implements IVisitor<Type> {
     // String s;
     public Type visit(Identifier n) {
         Type type;
-        if ((this.symbolTable.containsClass(n.s) && (type = this.symbolTable.getClass(n.s).type()) != null) || (this.currClass != null && this.currClass.containsMethod(n.s) && (type = this.currClass.getMethod(n.s).type()) != null) || (this.currClass != null && this.currClass.containsVar(n.s) && (type = this.currClass.getVar(n.s).type()) != null) || (type = this.symbolTable.getVarType(this.currMethod, this.currClass, n.s)) != null)
+        if ((this.symbolTable.containsClass(n.s) && (type = this.symbolTable.getClass(n.s).type()) != null) || (this.currClass != null && this.currClass.containsMethod(n.s) && (type = this.currClass.getMethod(n.s).type()) != null) || (this.currClass != null && this.currClass.containsVar(n.s) && (type = this.currClass.getVar(n.s).type()) != null) || (this.currMethod != null && this.currMethod.containsVar(n.s) && (type = this.currMethod.getVar(n.s).type()) != null))
             return type;
+        else if (this.currClass != null && this.currClass.parent() != null) {
+            Class currClass = this.currClass;
+            try {
+                this.currClass = this.symbolTable.getClass(this.currClass.parent());
+                return visit(n);
+            } finally {
+                this.currClass = currClass;
+            }
+        }
         throw new RuntimeException(String.format("Cannot resolve symbol %s", n.s));
     }
 }

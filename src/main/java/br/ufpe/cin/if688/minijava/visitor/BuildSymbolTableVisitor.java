@@ -114,7 +114,7 @@ public class BuildSymbolTableVisitor implements IVisitor<Void> {
     // MethodDeclList ml;
     public Void visit(ClassDeclExtends n) {
         String className = n.i.s;
-        if (!this.symbolTable.addClass(className, null))
+        if (!this.symbolTable.addClass(className, n.j.s))
             throw new RuntimeException("Duplicated class");
         this.currClass = this.symbolTable.getClass(className);
         assert this.currClass != null;
