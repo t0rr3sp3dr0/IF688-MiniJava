@@ -350,7 +350,7 @@ public class TypeCheckVisitor implements IVisitor<Type> {
     // String s;
     public Type visit(Identifier n) {
         Type type;
-        if ((this.symbolTable.containsClass(n.s) && (type = this.symbolTable.getClass(n.s).type()) != null) || (this.currClass != null && this.currClass.containsMethod(n.s) && (type = this.currClass.getMethod(n.s).type()) != null) || (this.currClass != null && this.currClass.containsVar(n.s) && (type = this.currClass.getVar(n.s).type()) != null) || (this.currMethod != null && this.currMethod.containsVar(n.s) && (type = this.currMethod.getVar(n.s).type()) != null))
+        if ((this.symbolTable.containsClass(n.s) && (type = this.symbolTable.getClass(n.s).type()) != null) || (this.currClass != null && this.currClass.containsMethod(n.s) && (type = this.currClass.getMethod(n.s).type()) != null) || (this.currClass != null && this.currClass.containsVar(n.s) && (type = this.currClass.getVar(n.s).type()) != null) || (this.currMethod != null && ((this.currMethod.containsParam(n.s) && (type = this.currMethod.getParam(n.s).type()) != null) || (this.currMethod.containsVar(n.s) && (type = this.currMethod.getVar(n.s).type()) != null))))
             return type;
         else if (this.currClass != null && this.currClass.parent() != null) {
             Class currClass = this.currClass;
